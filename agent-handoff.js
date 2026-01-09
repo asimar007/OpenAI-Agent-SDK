@@ -2,6 +2,7 @@ import "dotenv/config";
 import { Agent, tool, run } from "@openai/agents";
 import { z } from "zod";
 import fs from "node:fs/promises";
+import { RECOMMENDED_PROMPT_PREFIX } from "@openai/agents-core/extensions";
 
 const fetchAllPlans = tool({
   name: "internet_plans",
@@ -67,8 +68,18 @@ const salesAgent = new Agent({
   ],
 });
 
+const receptionAgent = new Agent({
+  name: "Reception Agent",
+  instructions: `
+    ${RECOMMENDED_PROMPT_PREFIX}
+    You are a reception agent for an internet service provider. Your role is to greet customers and determine whether they need help with sales inquiries about internet plans or refund requests. Based on their needs, hand off to the appropriate specialized agent. Be welcoming and ensure a smooth transition to the right expert.`,
+  handoffDescription:
+    "Handles initial customer inquiries and routes them to either sales or refund specialists based on the customer's needs",
+  handoffs: [salesAgent, refundAgent],
+});
+
 const result = await run(
-  salesAgent,
-  "I have 399 plan. Now i want refund right now. My customer id is abc123. Because i shifting to the new place"
+  receptionAgent,
+  "I only play Youtube what is the best plan for me?"
 );
 console.log(result.finalOutput);

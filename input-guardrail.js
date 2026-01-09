@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Agent, run } from "@openai/agents";
+import { Agent, run, InputGuardrailTripwireTriggered } from "@openai/agents";
 import { z } from "zod";
 
 const mathInputAgent = new Agent({
@@ -18,7 +18,7 @@ const mathInputGuardrail = {
     console.log(input);
     const result = await run(mathInputAgent, input);
     return {
-      outputInfo: result.finalOutput,
+      outputInfo: result.finalOutput.reasoning,
       //   tripwireTriggered: result.finalOutput.isValidMathQuestion ? false : true,
       tripwireTriggered: !result.finalOutput.isValidMathQuestion,
     };
@@ -31,6 +31,19 @@ const mathAgent = new Agent({
   inputGuardrails: [mathInputGuardrail],
 });
 
-const result = await run(mathAgent, "Help me to explain 2+2-4-10");
+// const result = await run(mathAgent, "What is const keyword");
 
-console.log(result.finalOutput);
+// console.log(result.finalOutput);
+
+async function main(q = "") {
+  try {
+    const result = await run(mathAgent, q);
+    console.log(result.finalOutput);
+  } catch (e) {
+    if (e instanceof InputGuardrailTripwireTriggered) {
+      console.log(e.message);
+    }
+  }
+}
+
+main("Write a poem");
